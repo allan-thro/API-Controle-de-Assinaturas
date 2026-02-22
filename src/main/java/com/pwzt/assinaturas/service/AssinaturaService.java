@@ -70,4 +70,27 @@ public class AssinaturaService {
         );
     }
 
+    public void cancelarAssinatura(UUID id){
+        Assinatura assinatura = assinaturaRepository.findById(id).orElseThrow();
+
+        assinatura.setStatus(Status.CANCELADA);
+        assinaturaRepository.save(assinatura);
+
+        DadosEventoDTO dadosEventoDto = new DadosEventoDTO(
+                assinatura.getId(),
+                null,
+                null,
+                LocalDate.now()
+        );
+
+        Evento mensagemEvento = new Evento(
+                TipoEvento.INSCRICAO_CANCELADA,
+                dadosEventoDto,
+                false
+        );
+
+        eventoRepository.save(mensagemEvento);
+        rabbitTemplate.convertAndSend("fila_eventos", mensagemEvento);
+    }
+
 }
