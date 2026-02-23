@@ -1,8 +1,6 @@
 package com.pwzt.assinaturas.infrastruct.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import com.pwzt.assinaturas.infrastruct.enumerator.TipoEvento;
-
 import java.util.UUID;
 
 public record RequisicaoAssinaturaDTO(

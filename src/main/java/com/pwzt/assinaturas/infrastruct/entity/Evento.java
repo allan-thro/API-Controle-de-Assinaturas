@@ -2,9 +2,11 @@ package com.pwzt.assinaturas.infrastruct.entity;
 
 import com.pwzt.assinaturas.infrastruct.dto.DadosEventoDTO;
 import com.pwzt.assinaturas.infrastruct.enumerator.TipoEvento;
+import com.pwzt.assinaturas.infrastruct.utility.ConversorDadosEvento;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.UUID;
@@ -12,6 +14,8 @@ import java.util.UUID;
 @Table(name = "eventos")
 @Entity
 
+@AllArgsConstructor
+@NoArgsConstructor
 @Setter
 @Getter
 
@@ -23,7 +27,8 @@ public class Evento {
     @Enumerated(EnumType.STRING)
     private TipoEvento tipoEvento;
 
-    @NotBlank
+    @Convert(converter = ConversorDadosEvento.class)
+    @Column(columnDefinition = "TEXT")
     private DadosEventoDTO dadosEvento;
 
     private Boolean processado;
