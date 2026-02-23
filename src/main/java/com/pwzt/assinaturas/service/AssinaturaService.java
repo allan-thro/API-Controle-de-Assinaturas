@@ -11,14 +11,12 @@ import com.pwzt.assinaturas.infrastruct.enumerator.TipoEvento;
 import com.pwzt.assinaturas.infrastruct.repository.AssinaturaRepository;
 import com.pwzt.assinaturas.infrastruct.repository.EventoRepository;
 import com.pwzt.assinaturas.infrastruct.repository.PlanoRepository;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.LocalDate;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -38,12 +36,11 @@ public class AssinaturaService {
         this.planoRepository = planoRepository;
     }
 
-    @Transactional
+    @TransactionalEventListener
     public RespostaAssinaturaDTO solicitarAssinatura(RequisicaoAssinaturaDTO assinaturaDto){
-        Optional<Plano> plano = planoRepository.findById(assinaturaDto.planoId());
-        if(plano.isEmpty()) throw new EntityNotFoundException(); // exception
+        Plano plano = planoRepository.findById(assinaturaDto.planoId()).orElseThrow();
 
-        int proximaCobrancaMeses = plano.get().getCicloCobranca().getMeses();
+        int proximaCobrancaMeses = plano.getCicloCobranca().getMeses();
 
         Assinatura assinatura = new Assinatura(assinaturaDto, Status.PENDENTE,
                 LocalDate.now().plusMonths(proximaCobrancaMeses));
@@ -51,8 +48,8 @@ public class AssinaturaService {
 
         DadosEventoDTO dadosEventoDto = new DadosEventoDTO(
                 assinatura.getId(),
-                plano.get().getId(),
-                plano.get().getValor(),
+                plano.getId(),
+                plano.getValor(),
                 LocalDate.now()
         );
 
@@ -72,7 +69,7 @@ public class AssinaturaService {
         );
     }
 
-    @Transactional
+    @TransactionalEventListener
     public void cancelarAssinatura(UUID id){
         Assinatura assinatura = assinaturaRepository.findById(id).orElseThrow();
 
