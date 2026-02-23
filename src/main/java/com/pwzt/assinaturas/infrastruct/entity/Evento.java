@@ -5,12 +5,14 @@ import com.pwzt.assinaturas.infrastruct.enumerator.TipoEvento;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.UUID;
 
 @Table(name = "eventos")
 @Entity
 
+@Setter
 @Getter
 
 public class Evento {

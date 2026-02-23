@@ -5,6 +5,7 @@ import com.pwzt.assinaturas.infrastruct.enumerator.Status;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Entity
 
 @Getter
+@Setter
 
 public class Assinatura {
 
@@ -30,8 +32,8 @@ public class Assinatura {
 
     private LocalDate dataProximaCobranca;
 
-    public Assinatura(RequisicaoAssinaturaDTO dto, String status, LocalDate data){
-        this.status = Status.fromString(status);
+    public Assinatura(RequisicaoAssinaturaDTO dto, Status status, LocalDate data){
+        this.status = status;
         this.emailCliente = dto.emailCliente();
         this.dataProximaCobranca = data;
         this.planoId = dto.planoId();

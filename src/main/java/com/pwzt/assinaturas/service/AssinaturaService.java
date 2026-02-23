@@ -6,6 +6,7 @@ import com.pwzt.assinaturas.infrastruct.dto.RespostaAssinaturaDTO;
 import com.pwzt.assinaturas.infrastruct.entity.Assinatura;
 import com.pwzt.assinaturas.infrastruct.entity.Evento;
 import com.pwzt.assinaturas.infrastruct.entity.Plano;
+import com.pwzt.assinaturas.infrastruct.enumerator.Status;
 import com.pwzt.assinaturas.infrastruct.enumerator.TipoEvento;
 import com.pwzt.assinaturas.infrastruct.repository.AssinaturaRepository;
 import com.pwzt.assinaturas.infrastruct.repository.EventoRepository;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 
@@ -43,7 +45,7 @@ public class AssinaturaService {
 
         int proximaCobrancaMeses = plano.get().getCicloCobranca().getMeses();
 
-        Assinatura assinatura = new Assinatura(assinaturaDto, "PENDENTE",
+        Assinatura assinatura = new Assinatura(assinaturaDto, Status.PENDENTE,
                 LocalDate.now().plusMonths(proximaCobrancaMeses));
         assinaturaRepository.save(assinatura);
 
@@ -70,6 +72,7 @@ public class AssinaturaService {
         );
     }
 
+    @Transactional
     public void cancelarAssinatura(UUID id){
         Assinatura assinatura = assinaturaRepository.findById(id).orElseThrow();
 
