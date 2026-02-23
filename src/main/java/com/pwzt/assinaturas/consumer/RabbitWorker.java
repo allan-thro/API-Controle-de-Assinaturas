@@ -1,13 +1,21 @@
 package com.pwzt.assinaturas.consumer;
 
 import com.pwzt.assinaturas.infrastruct.dto.DadosEventoDTO;
+import com.pwzt.assinaturas.infrastruct.entity.Assinatura;
 import com.pwzt.assinaturas.infrastruct.entity.Evento;
+import com.pwzt.assinaturas.infrastruct.entity.Plano;
+import com.pwzt.assinaturas.infrastruct.enumerator.Status;
 import com.pwzt.assinaturas.infrastruct.enumerator.TipoEvento;
 import com.pwzt.assinaturas.infrastruct.repository.AssinaturaRepository;
 import com.pwzt.assinaturas.infrastruct.repository.EventoRepository;
 import com.pwzt.assinaturas.infrastruct.repository.PlanoRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
+@Component
 public class RabbitWorker {
 
     private final AssinaturaRepository assinaturaRepository;
@@ -21,34 +29,58 @@ public class RabbitWorker {
     }
 
     @RabbitListener(queues = "fila_eventos")
-    public void manejadorEventos(Evento evento){
-        DadosEventoDTO dadosEvento = evento.getDadosEvento();
+    @Transactional
+    public void manejadorEventos(Evento eventoDaFila){
+        DadosEventoDTO dadosEvento = eventoDaFila.getDadosEvento();
+        int proximaCobrancaMeses;
+        LocalDate cobrancaSalva;
+        Plano planoAssinado;
 
-        switch(evento.getTipoEvento()){
+        Assinatura assinatura = assinaturaRepository.findById(dadosEvento.assinaturaId()).orElseThrow();
+        Evento eventoDoBanco = eventoRepository.findById(eventoDaFila.getId()).orElseThrow();
+        cobrancaSalva = assinatura.getDataProximaCobranca();
+
+        if(eventoDoBanco.getProcessado()) return; // evitar cobranças duplas caso chamadas duplicadas (erro interno)
+
+        switch(eventoDaFila.getTipoEvento()){
             case TipoEvento.INSCRICAO_CRIADA:
-                /*
-                    Confirmar a inscrição
-                    -> ir no banco assinatura setar como ativa
-                    -> setar proxima cobrança para proxima data
-                */
+                planoAssinado = planoRepository.findById(dadosEvento.planoId()).orElseThrow();
+                proximaCobrancaMeses = planoAssinado.getCicloCobranca().getMeses();
+
+                assinatura.setStatus(Status.ATIVA);
+                assinatura.setDataProximaCobranca(cobrancaSalva.plusMonths(proximaCobrancaMeses));
+
+                assinaturaRepository.save(assinatura);
                 break;
             case TipoEvento.PAGAMENTO_SUCEDIDO:
-                /*
-                    Renovar incrição
-                    -> ir no banco assinatura setar como ativa (caso esteja suspensa)
-                    -> setar proxima cobrança para proxima data
-                */
+                planoAssinado = planoRepository.findById(dadosEvento.planoId()).orElseThrow();
+                proximaCobrancaMeses = planoAssinado.getCicloCobranca().getMeses();
+
+                if(assinatura.getStatus().equals(Status.SUSPENSA)){
+                    assinatura.setDataProximaCobranca(dadosEvento.dataAtual().plusMonths(proximaCobrancaMeses));
+                }
+                else{
+                    assinatura.setDataProximaCobranca(cobrancaSalva.plusMonths(proximaCobrancaMeses));
+                }
+
+                assinatura.setStatus(Status.ATIVA);
+
+                assinaturaRepository.save(assinatura);
                 break;
             case TipoEvento.PAGAMENTO_FALHO:
                 /*
-                    Não alterar nada
-                    -> ir no banco assinatura setar como ativa (caso esteja suspensa)
-                    -> setar proxima cobrança para proxima data
+                    Não alterar nada (Mandar email de notificação)
+                */
+                break;
+            case TipoEvento.INSCRICAO_CANCELADA:
+                /*
+                    Não alterar nada (Mandar email de despedida)
                 */
                 break;
         }
 
-        // atualizar evento como processado
+        eventoDoBanco.setProcessado(true);
+        eventoRepository.save(eventoDaFila);
     }
 
 }
