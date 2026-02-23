@@ -1,8 +1,7 @@
 package com.pwzt.assinaturas.service;
 
-import com.pwzt.assinaturas.AssinaturasApplication;
 import com.pwzt.assinaturas.infrastruct.dto.PlanoReportDTO;
-import com.pwzt.assinaturas.infrastruct.dto.ReportDTO;
+import com.pwzt.assinaturas.infrastruct.dto.RespostaReportDTO;
 import com.pwzt.assinaturas.infrastruct.entity.Plano;
 import com.pwzt.assinaturas.infrastruct.enumerator.Status;
 import com.pwzt.assinaturas.infrastruct.repository.AssinaturaRepository;
@@ -23,7 +22,7 @@ public class ReportService {
         this.planoRepository = planoRepository;
     }
 
-    public ReportDTO obterMetricas(){
+    public RespostaReportDTO obterMetricas(){
         long totalCanceladas = assinaturaRepository.countByStatus(Status.CANCELADA);
         long totalAtivas = assinaturaRepository.countByStatus(Status.ATIVA);
 
@@ -42,7 +41,7 @@ public class ReportService {
             listaPlanoReport.add(planoRepot);
         }
 
-        return new ReportDTO(totalAtivas, totalCanceladas, listaPlanoReport);
+        return new RespostaReportDTO(totalAtivas, totalCanceladas, listaPlanoReport);
     }
 
 }
