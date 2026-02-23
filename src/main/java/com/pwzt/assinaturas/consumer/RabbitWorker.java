@@ -9,9 +9,9 @@ import com.pwzt.assinaturas.infrastruct.enumerator.TipoEvento;
 import com.pwzt.assinaturas.infrastruct.repository.AssinaturaRepository;
 import com.pwzt.assinaturas.infrastruct.repository.EventoRepository;
 import com.pwzt.assinaturas.infrastruct.repository.PlanoRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.LocalDate;
 
@@ -29,7 +29,7 @@ public class RabbitWorker {
     }
 
     @RabbitListener(queues = "fila_eventos")
-    @Transactional
+    @TransactionalEventListener
     public void manejadorEventos(Evento eventoDaFila){
         DadosEventoDTO dadosEvento = eventoDaFila.getDadosEvento();
         int proximaCobrancaMeses;
@@ -44,12 +44,7 @@ public class RabbitWorker {
 
         switch(eventoDaFila.getTipoEvento()){
             case TipoEvento.INSCRICAO_CRIADA:
-                planoAssinado = planoRepository.findById(dadosEvento.planoId()).orElseThrow();
-                proximaCobrancaMeses = planoAssinado.getCicloCobranca().getMeses();
-
                 assinatura.setStatus(Status.ATIVA);
-                assinatura.setDataProximaCobranca(cobrancaSalva.plusMonths(proximaCobrancaMeses));
-
                 assinaturaRepository.save(assinatura);
                 break;
             case TipoEvento.PAGAMENTO_SUCEDIDO:
@@ -80,7 +75,7 @@ public class RabbitWorker {
         }
 
         eventoDoBanco.setProcessado(true);
-        eventoRepository.save(eventoDaFila);
+        eventoRepository.save(eventoDoBanco);
     }
 
 }

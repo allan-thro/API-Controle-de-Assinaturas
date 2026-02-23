@@ -6,7 +6,8 @@ public enum TipoEvento {
     INSCRICAO_CRIADA ("subscription_created"),
     PAGAMENTO_SUCEDIDO ("payment_success"),
     PAGAMENTO_FALHO ("payment_failed"),
-    INSCRICAO_CANCELADA ("subscription_canceled");
+    INSCRICAO_CANCELADA ("subscription_canceled"),
+    INSCRICAO_SUSPENSA ("subscription_suspended");
 
     private final String valorJson;
 
